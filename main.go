@@ -14,12 +14,12 @@ import (
 )
 
 var (
-	iface   = kingpin.Flag("eth0", "Interface to get packets from").Short('i').String()
-	fin     = kingpin.Flag("in", "PCAP file to read from, overrides --eth0").String()
-	fout    = kingpin.Flag("out", "Filename to write to").OpenFile(os.O_CREATE|os.O_RDWR, 0660)
+	iface   = kingpin.Flag("iface", "Interface to get packets from (enables live capturing)").Short('i').Default("eth0").String()
+	filter  = kingpin.Flag("filter", "BPF filter for pcap").Short('F').Default("tcp and port 80").String()
 	snaplen = kingpin.Flag("s", "How many bytes will be caputured for each packet").Default("262144").Int()
 	timeout = kingpin.Flag("timeout", "Flush inactive connections after this amount of minutes (for live capturing).").Default("20").Int()
-	filter  = kingpin.Flag("filter", "BPF filter for pcap").Short('F').Default("tcp and port 80").String()
+	fin     = kingpin.Flag("read", "PCAP file to read from, overrides --iface").Short('r').String()
+	fout    = kingpin.Flag("write", "Filename to write to request-response pairs (in JSON format)").Short('w').OpenFile(os.O_CREATE|os.O_RDWR, 0660)
 	verbose = kingpin.Flag("verbose", "Print each raw captured packet").Short('v').Bool()
 )
 
