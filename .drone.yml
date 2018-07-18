@@ -6,7 +6,7 @@ pipeline:
     commands:
       - export GOPATH=$(pwd)
       - apt update
-      - apt install libpcap-dev
+      - apt install -y libpcap-dev
       - go get scout
       - go install scout
 
