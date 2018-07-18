@@ -61,7 +61,12 @@ func main() {
 	dumper := NewDumper(rw)
 
 	for _, bag := range *bags {
-		parts := strings.Split(bag, "|")
+		parts := strings.Split(bag, "::")
+
+		if len(parts) < 2 {
+			log.Fatal("Wrong format for bag, must be in form 'regexp::filename'")
+		}
+
 		dumper.AddBag(NewBagRegexp(
 			parts[0],
 			NewRotateWriter(parts[1], dur),
