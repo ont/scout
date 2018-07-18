@@ -2,11 +2,10 @@
 
 pipeline:
   build:
-    image: golang
+    image: golang:alpine
     commands:
       - export GOPATH=$(pwd)
-      - apt update
-      - apt install -y libpcap-dev
+      - apk add --no-cache libpcap
       - go get scout
       - go install scout
 
