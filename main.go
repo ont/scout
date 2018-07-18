@@ -1,8 +1,9 @@
 package main
 
 import (
+	"io"
 	"log"
-	"os"
+	"strings"
 	"time"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -19,8 +20,10 @@ var (
 	snaplen = kingpin.Flag("s", "How many bytes will be caputured for each packet").Default("262144").Int()
 	timeout = kingpin.Flag("timeout", "Flush inactive connections after this amount of minutes (for live capturing).").Default("20").Int()
 	fin     = kingpin.Flag("read", "PCAP file to read from, overrides --iface").Short('r').String()
-	fout    = kingpin.Flag("write", "Filename to write to request-response pairs (in JSON format)").Short('w').OpenFile(os.O_CREATE|os.O_RDWR, 0660)
+	fout    = kingpin.Flag("write", "Filename to write to request-response pairs (in JSON format)").Short('w').String()
 	verbose = kingpin.Flag("verbose", "Print each raw captured packet").Short('v').Bool()
+	bags    = kingpin.Flag("bag", "Filer in format \"regexp|filename\" for sorting incoming requests via URL into files. Can be repeated multiple times.").Short('b').Strings()
+	rotate  = kingpin.Flag("rotate", "Rotate each output file each N-hours. This option specify N value.").Short('R').Default("0").Int()
 )
 
 /*
@@ -48,9 +51,26 @@ func main() {
 		log.Fatal(err)
 	}
 
+	dur := time.Duration(*rotate) * time.Hour
+
+	var rw io.Writer
+	if *fout != "" {
+		rw = NewRotateWriter(*fout, dur)
+	}
+
+	dumper := NewDumper(rw)
+
+	for _, bag := range *bags {
+		parts := strings.Split(bag, "|")
+		dumper.AddBag(NewBagRegexp(
+			parts[0],
+			NewRotateWriter(parts[1], dur),
+		))
+	}
+
 	// Set up assembly
 	streamFactory := &HttpStreamFactory{
-		dumper: NewDumper(*fout),
+		dumper: dumper,
 	}
 	streamPool := tcpassembly.NewStreamPool(streamFactory)
 	assembler := tcpassembly.NewAssembler(streamPool)

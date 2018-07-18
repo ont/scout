@@ -3,16 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/google/gopacket"
 )
 
 type Dumper struct {
-	file  *os.File
+	out  io.Writer
+	bags []Bag
+
 	conns map[string]*ReqResPair
 
 	lock sync.RWMutex
@@ -27,12 +29,11 @@ type ReqResPair struct {
 	net, tran gopacket.Flow
 }
 
-func NewDumper(file *os.File) *Dumper {
+func NewDumper(out io.Writer) *Dumper {
 	return &Dumper{
-		file:  file,
+		out:   out,
 		conns: make(map[string]*ReqResPair),
-
-		lock: sync.RWMutex{},
+		lock:  sync.RWMutex{},
 	}
 }
 
@@ -113,10 +114,32 @@ func (d *Dumper) dump(pair *ReqResPair) {
 		return
 	}
 
-	if d.file != nil {
-		d.file.Write(bytes)
-		d.file.WriteString("\n")
+	d.dumpToOut(bytes)
+	d.dumpToBags(pair, bytes)
+
+}
+
+func (d *Dumper) dumpToOut(bytes []byte) {
+	if d.out != nil {
+		_, err1 := d.out.Write(bytes)
+		_, err2 := d.out.Write([]byte("\n"))
+
+		// TODO: separate error handling?
+		if err1 != nil || err2 != nil {
+			log.Fatal("Error during writing to output file: ", err1, err2)
+		}
+
 	} else {
 		fmt.Println(string(bytes)) // else output to stdout
 	}
+}
+
+func (d *Dumper) dumpToBags(pair *ReqResPair, bytes []byte) {
+	for _, bag := range d.bags {
+		bag.Write(pair, bytes)
+	}
+}
+
+func (d *Dumper) AddBag(b Bag) {
+	d.bags = append(d.bags, b)
 }
