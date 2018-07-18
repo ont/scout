@@ -5,6 +5,8 @@ pipeline:
     image: golang
     commands:
       - export GOPATH=$(pwd)
+      - apt update
+      - apt install libpcap-dev
       - go get scout
       - go install scout
 
