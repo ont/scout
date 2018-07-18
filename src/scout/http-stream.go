@@ -53,7 +53,6 @@ func (hs *HttpStream) Run() {
 		hs.mode = MODE_REQUESTS
 	}
 
-	hs.net.FastHash()
 	for {
 		switch hs.mode {
 		case MODE_REQUESTS:

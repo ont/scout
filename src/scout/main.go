@@ -12,6 +12,8 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 	"github.com/google/gopacket/tcpassembly"
+
+	_ "net/http/pprof"
 )
 
 var (
@@ -24,6 +26,7 @@ var (
 	verbose = kingpin.Flag("verbose", "Print each raw captured packet").Short('v').Bool()
 	bags    = kingpin.Flag("bag", "Filer in format \"regexp|filename\" for sorting incoming requests via URL into files. Can be repeated multiple times.").Short('b').Strings()
 	rotate  = kingpin.Flag("rotate", "Rotate each output file each N-hours. This option specify N value.").Short('R').Default("0").Int()
+	debug   = kingpin.Flag("debug", "Enable debug output and go http pprof profiler.").Short('d').Bool()
 )
 
 /*
@@ -31,6 +34,10 @@ var (
  */
 func main() {
 	kingpin.Parse()
+
+	if *debug {
+		RunProfiler()
+	}
 
 	var handle *pcap.Handle
 	var err error
