@@ -5,6 +5,6 @@ import (
 	_ "net/http/pprof"
 )
 
-func RunProfiler() {
-	go http.ListenAndServe("0.0.0.0:8080", nil)
+func RunProfiler(port string) {
+	go http.ListenAndServe("0.0.0.0:"+port, nil)
 }

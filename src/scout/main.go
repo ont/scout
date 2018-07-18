@@ -26,7 +26,7 @@ var (
 	verbose = kingpin.Flag("verbose", "Print each raw captured packet").Short('v').Bool()
 	bags    = kingpin.Flag("bag", "Filer in format \"regexp|filename\" for sorting incoming requests via URL into files. Can be repeated multiple times.").Short('b').Strings()
 	rotate  = kingpin.Flag("rotate", "Rotate each output file each N-hours. This option specify N value.").Short('R').Default("0").Int()
-	debug   = kingpin.Flag("debug", "Enable debug output and go http pprof profiler.").Short('d').Bool()
+	debug   = kingpin.Flag("debug", "Debug port to run go pprof on.").Short('d').String()
 )
 
 /*
@@ -35,8 +35,8 @@ var (
 func main() {
 	kingpin.Parse()
 
-	if *debug {
-		RunProfiler()
+	if *debug != "" {
+		RunProfiler(*debug)
 	}
 
 	var handle *pcap.Handle
