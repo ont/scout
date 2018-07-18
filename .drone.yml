@@ -5,7 +5,7 @@ pipeline:
     image: golang:alpine
     commands:
       - export GOPATH=$(pwd)
-      - apk add --no-cache libpcap git
+      - apk add --no-cache libpcap git gcc
       - go get scout
       - go install scout
 
