@@ -1,0 +1,19 @@
+# vim: ts=2:sts=2:sw=2:expandtab:smarttab:
+
+pipeline:
+  build:
+    image: golang
+    commands:
+      - export GOPATH=$(pwd)
+      - go get scout
+      - go install scout
+
+  publish-docker:
+    image: plugins/docker
+    repo: ontrif/flux
+    tag:
+      - latest
+      - ${DRONE_TAG}
+    when:
+      event: tag
+    secrets: [ docker_username, docker_password ]
