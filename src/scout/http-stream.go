@@ -102,14 +102,14 @@ func (hs *HttpStream) ReadRequest() (*http.Request, []byte, error) {
 	}
 
 	body, err := ioutil.ReadAll(req.Body)
-
-	if strings.Contains(req.Header.Get("Content-Encoding"), "gzip") {
-		body = hs.Decompress(body)
-	}
-
 	if err != nil {
 		log.Println("Error reading request body", hs.net, hs.transport, ":", err)
 		return req, nil, err
+	}
+	req.Body.Close()
+
+	if strings.Contains(req.Header.Get("Content-Encoding"), "gzip") {
+		body = hs.Decompress(body)
 	}
 
 	return req, body, nil
@@ -152,6 +152,7 @@ func (hs *HttpStream) ReadResponse() (*http.Response, []byte, error) {
 		// we return body as-is but signal about error (for stream termination)
 		return res, body, err
 	}
+	res.Body.Close()
 
 	return res, body, nil
 }

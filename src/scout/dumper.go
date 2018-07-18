@@ -136,7 +136,10 @@ func (d *Dumper) dumpToOut(bytes []byte) {
 
 func (d *Dumper) dumpToBags(pair *ReqResPair, bytes []byte) {
 	for _, bag := range d.bags {
-		bag.Write(pair, bytes)
+		err := bag.Write(pair, bytes)
+		if err != nil {
+			log.Fatal("Error during writing to output bag: ", err)
+		}
 	}
 }
 

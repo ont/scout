@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"log"
 	"regexp"
 )
 
@@ -19,7 +18,7 @@ func NewBagRegexp(reg string, out io.Writer) *BagRegexp {
 }
 
 func (b *BagRegexp) Write(pair *ReqResPair, bytes []byte) error {
-	log.Println(pair.req.Host + pair.req.URL.Path)
+	//log.Println(pair.req.Host + pair.req.URL.Path)
 	if b.r.MatchString(pair.req.Host + pair.req.URL.Path) {
 		_, err := b.out.Write(bytes)
 		if err != nil {
