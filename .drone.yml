@@ -10,7 +10,7 @@ pipeline:
 
   publish-docker:
     image: plugins/docker
-    repo: ontrif/flux
+    repo: ontrif/scout
     tag:
       - latest
       - ${DRONE_TAG}
