@@ -39,8 +39,10 @@ func (s *StorageRotate) Rotate(stamp time.Time) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if err := s.storage.Close(); err != nil {
-		log.Fatal("Can't close storage during rotation:", err)
+	if s.storage != nil {
+		if err := s.storage.Close(); err != nil {
+			log.Fatal("Can't close storage during rotation:", err)
+		}
 	}
 	s.storage = s.fabric(stamp.Format("2006-01-02_15:04:05"))
 }
