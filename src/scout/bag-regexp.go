@@ -1,35 +1,29 @@
 package main
 
 import (
-	"io"
 	"regexp"
 )
 
 type BagRegexp struct {
-	out io.Writer
+	out Storage
 	r   *regexp.Regexp
 }
 
-func NewBagRegexp(reg string, out io.Writer) *BagRegexp {
+func NewBagRegexp(reg string, out Storage) *BagRegexp {
 	return &BagRegexp{
 		out: out,
 		r:   regexp.MustCompile(reg),
 	}
 }
 
-func (b *BagRegexp) Write(pair *ReqResPair, bytes []byte) error {
+func (b *BagRegexp) Write(pair *ReqResPair) error {
 	//log.Println(pair.req.Host + pair.req.URL.Path)
 	if pair.req == nil {
 		return nil // skip pair without request
 	}
 
 	if b.r.MatchString(pair.req.Host + pair.req.URL.Path) {
-		_, err := b.out.Write(bytes)
-		if err != nil {
-			return err
-		}
-
-		_, err = b.out.Write([]byte("\n"))
+		err := b.out.Save(pair)
 		if err != nil {
 			return err
 		}

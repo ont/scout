@@ -1,3 +1,5 @@
 bin/
 src/github.com/
 src/gopkg.in/
+src/go.etcd.io/
+pkg/

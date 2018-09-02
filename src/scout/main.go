@@ -1,9 +1,7 @@
 package main
 
 import (
-	"io"
 	"log"
-	"strings"
 	"time"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -17,16 +15,17 @@ import (
 )
 
 var (
-	iface   = kingpin.Flag("iface", "Interface to get packets from (enables live capturing)").Short('i').Default("eth0").String()
-	filter  = kingpin.Flag("filter", "BPF filter for pcap").Short('F').Default("tcp and port 80").String()
-	snaplen = kingpin.Flag("s", "How many bytes will be caputured for each packet").Default("262144").Int()
-	timeout = kingpin.Flag("timeout", "Flush inactive connections after this amount of minutes (for live capturing).").Default("20").Int()
-	fin     = kingpin.Flag("read", "PCAP file to read from, overrides --iface").Short('r').String()
-	fout    = kingpin.Flag("write", "Filename to write to request-response pairs (in JSON format)").Short('w').String()
-	verbose = kingpin.Flag("verbose", "Print each raw captured packet").Short('v').Bool()
-	bags    = kingpin.Flag("bag", "Filer in format \"regexp|filename\" for sorting incoming requests via URL into files. Can be repeated multiple times.").Short('b').Strings()
-	rotate  = kingpin.Flag("rotate", "Rotate each output file each N-hours. This option specify N value.").Short('R').Default("0").Int()
-	debug   = kingpin.Flag("debug", "Debug port to run go pprof on.").Short('d').String()
+	iface    = kingpin.Flag("iface", "Interface to get packets from (enables live capturing)").Short('i').Default("eth0").String()
+	filter   = kingpin.Flag("filter", "BPF filter for pcap").Short('F').Default("tcp and port 80").String()
+	snaplen  = kingpin.Flag("s", "How many bytes will be caputured for each packet").Default("262144").Int()
+	timeout  = kingpin.Flag("timeout", "Flush inactive connections after this amount of minutes (for live capturing).").Default("20").Int()
+	fin      = kingpin.Flag("read", "PCAP file to read from, overrides --iface").Short('r').String()
+	basename = kingpin.Flag("write", "Filename to write to request-response pairs (in JSON format).").Short('w').String()
+	indexBy  = kingpin.Flag("index-by", "Cookie name which contains session. Enables sessions index file for each json file.").String()
+	verbose  = kingpin.Flag("verbose", "Print each raw captured packet").Short('v').Bool()
+	bags     = kingpin.Flag("bag", "Filer in format \"regexp|filename\" for sorting incoming requests via URL into files. Can be repeated multiple times.").Short('b').Strings()
+	rotate   = kingpin.Flag("rotate", "Rotate each output file each N-hours. This option specify N value.").Short('R').Default("0").Int()
+	debug    = kingpin.Flag("debug", "Debug port to run go pprof on.").Short('d').String()
 )
 
 /*
@@ -58,27 +57,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dur := time.Duration(*rotate) * time.Hour
-
-	var rw io.Writer
-	if *fout != "" {
-		rw = NewRotateWriter(*fout, dur)
-	}
-
-	dumper := NewDumper(rw)
-
-	for _, bag := range *bags {
-		parts := strings.Split(bag, "::")
-
-		if len(parts) < 2 {
-			log.Fatal("Wrong format for bag, must be in form 'regexp::filename'")
-		}
-
-		dumper.AddBag(NewBagRegexp(
-			parts[0],
-			NewRotateWriter(parts[1], dur),
-		))
-	}
+	dumper := ConfiguredDumper(*basename, *indexBy, *bags, time.Duration(*rotate)*time.Hour)
 
 	// Set up assembly
 	streamFactory := &HttpStreamFactory{
