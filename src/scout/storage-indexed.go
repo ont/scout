@@ -92,8 +92,6 @@ func (s *StorageIndexed) index(pair *ReqResPair) error {
 		orig := b.Get([]byte(sess.Value))
 		b.Put([]byte(sess.Value), append(orig, s.itob(s.offset)...))
 
-		log.Println(sess.Value, s.offset)
-
 		return nil
 	})
 }

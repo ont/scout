@@ -36,7 +36,7 @@ func ConfiguredDumper(basename, indexBy string, bags []string, duration time.Dur
 			log.Fatal("Wrong format for bag, must be in form 'regexp::filename'")
 		}
 
-		dumper.AddBag(NewBagRegexp(parts[0], ConfiguredStorageRotate(basename, indexBy, duration)))
+		dumper.AddBag(NewBagRegexp(parts[0], ConfiguredStorageRotate(parts[1], indexBy, duration)))
 	}
 
 	return dumper
