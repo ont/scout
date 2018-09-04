@@ -13,61 +13,33 @@ type Dumper struct {
 	out  Storage
 	bags []Bag
 
-	conns map[string]*ReqResPair
+	cache Cache
 
 	lock sync.RWMutex
 }
 
-func NewDumper(out Storage) *Dumper {
+func NewDumper(out Storage, cache Cache) *Dumper {
 	return &Dumper{
 		out:   out,
-		conns: make(map[string]*ReqResPair),
+		cache: cache,
 		lock:  sync.RWMutex{},
 	}
 }
 
 // Request registers new http request (this method probably called from stream)
 func (d *Dumper) Request(net, transport gopacket.Flow, req *http.Request, body []byte) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-
-	pair := d.findOrCreate(net, transport)
-
-	pair.req = req
-	pair.reqBody = body
+	if err := d.cache.Request(net, transport, req, body); err != nil {
+		log.Fatal("Error during request registration:", err)
+	}
 }
 
 // Response registers new http response (this method probably called from stream)
 func (d *Dumper) Response(net, transport gopacket.Flow, res *http.Response, body []byte) {
-	d.lock.Lock()
-	defer d.lock.Unlock()
-
-	pair := d.findOrCreate(net.Reverse(), transport.Reverse())
-
-	pair.res = res
-	pair.resBody = body
-
-	d.dump(pair)
-
-	delete(d.conns, d.key(net.Reverse(), transport.Reverse()))
-}
-
-func (d *Dumper) findOrCreate(net, tran gopacket.Flow) *ReqResPair {
-	key := d.key(net, tran)
-
-	if pair, found := d.conns[key]; found {
-		return pair
+	if pair, err := d.cache.Response(net, transport, res, body); err != nil {
+		log.Fatal("Error during response registration:", err)
 	} else {
-		pair := &ReqResPair{net: net, tran: tran}
-		d.conns[key] = pair
-		return pair
+		d.dump(pair)
 	}
-}
-
-func (d *Dumper) key(net, tran gopacket.Flow) string {
-	client := net.Src().String() + ":" + tran.Src().String()
-	server := net.Dst().String() + ":" + tran.Dst().String()
-	return client + "|" + server
 }
 
 func (d *Dumper) dump(pair *ReqResPair) {

@@ -18,11 +18,11 @@ func NewBagRegexp(reg string, out Storage) *BagRegexp {
 
 func (b *BagRegexp) Write(pair *ReqResPair) error {
 	//log.Println(pair.req.Host + pair.req.URL.Path)
-	if pair.req == nil {
-		return nil // skip pair without request
+	if !pair.HasRequest {
+		return nil // skip pair without request part
 	}
 
-	if b.r.MatchString(pair.req.Host + pair.req.URL.Path) {
+	if b.r.MatchString(pair.Host + pair.Path) {
 		err := b.out.Save(pair)
 		if err != nil {
 			return err

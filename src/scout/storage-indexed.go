@@ -74,11 +74,11 @@ func (s *StorageIndexed) Close() error {
 }
 
 func (s *StorageIndexed) index(pair *ReqResPair) error {
-	if pair.req == nil {
+	if !pair.HasRequest {
 		return nil // skip broken pairs (which contain only response)
 	}
 
-	sess, err := pair.req.Cookie(s.cookie)
+	sess, err := pair.Cookie(s.cookie)
 	if err == http.ErrNoCookie {
 		return nil // don't index requests without session cookie
 	}

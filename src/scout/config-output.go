@@ -22,12 +22,15 @@ func ConfiguredStorageRotate(basename, indexBy string, duration time.Duration) *
 	return storage
 }
 
-func ConfiguredDumper(basename, indexBy string, bags []string, duration time.Duration) *Dumper {
+func ConfiguredDumper(basename, indexBy, cachePath string, bags []string, duration time.Duration) *Dumper {
 	if basename == "" {
-		return NewDumper(nil)
+		return NewDumper(nil, ConfiguredCache(cachePath))
 	}
 
-	dumper := NewDumper(ConfiguredStorageRotate(basename, indexBy, duration))
+	dumper := NewDumper(
+		ConfiguredStorageRotate(basename, indexBy, duration),
+		ConfiguredCache(cachePath),
+	)
 
 	for _, bag := range bags {
 		parts := strings.Split(bag, "::")

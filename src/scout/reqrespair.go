@@ -9,38 +9,89 @@ import (
 )
 
 type ReqResPair struct {
-	req *http.Request
-	res *http.Response
+	HasRequest bool
+	Method     string
+	Url        string
+	Path       string
+	Host       string
+	ReqHeaders http.Header
 
-	reqBody, resBody []byte
+	HasResponse bool
+	Code        int
+	Status      string
+	ResHeaders  http.Header
 
-	net, tran gopacket.Flow
+	//Req *http.Request
+	//Res *http.Response
+
+	ReqBody, ResBody []byte
+
+	Src, Dst, SrcPort, DstPort string
+	//net, tran gopacket.Flow
+}
+
+func (p *ReqResPair) SetRequest(req *http.Request, body []byte) *ReqResPair {
+	p.HasRequest = true
+
+	p.Method = req.Method
+	p.Url = req.RequestURI
+	p.Host = req.Host
+	p.Path = req.URL.Path
+	p.ReqHeaders = req.Header
+	p.ReqBody = body
+
+	return p
+}
+
+func (p *ReqResPair) SetResponse(res *http.Response, body []byte) *ReqResPair {
+	p.HasResponse = true
+
+	p.Code = res.StatusCode
+	p.Status = res.Status
+	p.ResHeaders = res.Header
+	p.ResBody = body
+
+	return p
+}
+
+func (p *ReqResPair) SetFlow(net, tran gopacket.Flow) *ReqResPair {
+	p.Src = net.Src().String()
+	p.Dst = net.Dst().String()
+	p.SrcPort = tran.Src().String()
+	p.DstPort = tran.Dst().String()
+
+	return p
+}
+
+func (p *ReqResPair) Cookie(name string) (*http.Cookie, error) {
+	req := http.Request{Header: p.ReqHeaders}
+	return req.Cookie(name)
 }
 
 func (p *ReqResPair) AsJson() ([]byte, error) {
 	data := map[string]interface{}{
-		"src":      p.net.Src().String(),
-		"dst":      p.net.Dst().String(),
-		"src_port": p.tran.Src().String(),
-		"dst_port": p.tran.Dst().String(),
+		"src":      p.Src,
+		"dst":      p.Dst,
+		"src_port": p.SrcPort,
+		"dst_port": p.DstPort,
 	}
 
-	if p.req != nil {
+	if p.HasRequest {
 		data["req"] = map[string]interface{}{
-			"method":  p.req.Method,
-			"url":     p.req.RequestURI,
-			"host":    p.req.Host,
-			"headers": p.req.Header,
-			"body":    string(p.reqBody),
+			"method":  p.Method,
+			"url":     p.Url,
+			"host":    p.Host,
+			"headers": p.ReqHeaders,
+			"body":    string(p.ReqBody),
 		}
 	}
 
-	if p.res != nil {
+	if p.HasResponse {
 		data["res"] = map[string]interface{}{
-			"code":    p.res.StatusCode,
-			"status":  p.res.Status,
-			"headers": p.res.Header,
-			"body":    string(p.resBody),
+			"code":    p.Code,
+			"status":  p.Status,
+			"headers": p.ResHeaders,
+			"body":    string(p.ResBody),
 		}
 	}
 
