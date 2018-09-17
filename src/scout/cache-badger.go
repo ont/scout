@@ -20,6 +20,7 @@ func NewCacheBadger(path string) *CacheBadger {
 	opts := badger.DefaultOptions
 	opts.Dir = path
 	opts.ValueDir = path
+	opts.Truncate = true // solves error "Value log truncate required to run DB. This might result in data loss."
 	db, err := badger.Open(opts)
 	if err != nil {
 		log.Fatal("Error during creation badger-cache:", err)
